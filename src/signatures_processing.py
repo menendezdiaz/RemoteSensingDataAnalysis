@@ -89,8 +89,57 @@ def load_signatures_for_object(folder, base_name, clean=True, return_std=False):
             return wl, None, None
         return wl, None
 
-    # Compute mean and std safely
-    mean_refl = np.nanmean(signatures, axis=0)
+    # Compute mean and std safely with proper checks
+    if signatures.shape[0] == 0:
+        # No valid signatures to process
+        print(f"⚠️ No valid signatures found for {base_name}.")
+        if return_std:
+            return wl, None, None
+        return wl, None
+    
+    # Check if all values are NaN along the axis
+    if np.isnan(signatures).all(axis=0).all():
+        print(f"⚠️ All spectral data is NaN for {base_name}.")
+        if return_std:
+            return wl, None, None
+        return wl, None
+
+    # Compute mean and std safely with additional checks
+    # Check if we have enough valid data points for each wavelength
+    valid_counts = np.sum(~np.isnan(signatures), axis=0)
+    
+    # Initialize arrays with NaN
+    mean_refl = np.full(signatures.shape[1], np.nan)
+    std_refl = np.full(signatures.shape[1], np.nan)
+    
+    # Only compute mean/std where we have valid data
+    valid_mask = valid_counts > 0
+    if np.any(valid_mask):
+        # Compute mean only where we have at least 1 valid sample
+        mean_refl[valid_mask] = np.nanmean(signatures[:, valid_mask], axis=0)
+        
+        if return_std:
+            # Only compute std where we have more than 1 valid sample
+            # This prevents the "degrees of freedom <= 0" warning
+            std_mask = valid_counts > 1
+            if np.any(std_mask):
+                # Extract only the valid data for std calculation
+                valid_signatures = signatures[:, std_mask]
+                # Ensure we have at least 2 non-NaN values per wavelength
+                for i, col_idx in enumerate(np.where(std_mask)[0]):
+                    col_data = valid_signatures[:, i]
+                    valid_data = col_data[~np.isnan(col_data)]
+                    if len(valid_data) > 1:
+                        std_refl[col_idx] = np.std(valid_data, ddof=1)
+                    else:
+                        std_refl[col_idx] = np.nan
+    
+    # Check if mean calculation resulted in all NaN values
+    if np.isnan(mean_refl).all():
+        print(f"⚠️ Mean calculation resulted in all NaN values for {base_name}.")
+        if return_std:
+            return wl, None, None
+        return wl, None
 
     if return_std:
         std_refl = np.nanstd(signatures, axis=0)
