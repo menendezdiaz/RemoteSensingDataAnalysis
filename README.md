@@ -17,11 +17,9 @@ RemoteSensingDataAnalysis/
 │
 ├── notebooks/             # Analysis and test notebooks
 ├── src/                   # Modular source code
-│   ├── data_processing.py
 │   ├── signatures_processing.py
 │   └── utils.py
 │
-├── results/               # Generated plots, tables, and outputs
 ├── requirements.txt       # Required dependencies
 └── README.md              # This file
 ```
@@ -43,7 +41,11 @@ RemoteSensingDataAnalysis/
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the notebooks or Python scripts located in the `src/` directory.
+3. Run the Python scripts located in the `src/` directory.
+
+4. Open the notebooks and run to visualize
+
+
 
 ## 📈 Next Steps
 - Implement spectral integration and object detection workflows  
